@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simplifikathon - Diagrama de Implementação Interativo</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter e Fira Code -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;700&family=Inter:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #F7F4EB;
+            color: #1A1813;
+        }
+
+        .font-code {
+            font-family: 'Fira Code', monospace;
+        }
+
+        .grid-bg {
+            background-image: radial-gradient(#d5cdb8 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+
+        .uml-bg-card {
+            background-color: #FFFDF0;
+        }
+
+        .uml-border-burgundy {
+            border-color: #5C1D24;
+        }
+
+        .uml-text-burgundy {
+            color: #5C1D24;
+        }
+
+        /* 3D UML Node perspective styling */
+        .uml-node-3d {
+            position: absolute;
+            background-color: #FFFDF0;
+            border: 2px solid #5C1D24;
+        }
+
+        .uml-node-3d::before {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: 0;
+            width: 100%;
+            height: 10px;
+            background-color: #FFFDF0;
+            border: 2px solid #5C1D24;
+            border-bottom: none;
+            transform: skewX(-45deg);
+            transform-origin: bottom left;
+            pointer-events: none;
+        }
+
+        .uml-node-3d::after {
+            content: '';
+            position: absolute;
+            left: 100%;
+            top: 0;
+            width: 10px;
+            height: 100%;
+            background-color: #E1D9C3;
+            border: 2px solid #5C1D24;
+            border-left: none;
+            transform: skewY(-45deg);
+            transform-origin: top left;
+            pointer-events: none;
+        }
+
+        /* Cursor styles for dragging */
+        .draggable {
+            cursor: grab;
+            user-select: none;
+        }
+
+        .draggable:active {
+            cursor: grabbing;
+        }
+
+        /* Custom Scrollbars */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #F4EFE3;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #C4B9A3;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #A69A81;
+        }
+    </style>
+</head>
+
+<body class="h-screen overflow-hidden w-screen">
+
+    <!-- Main Workspace taking 100% of the screen -->
+    <main class="w-full h-full relative overflow-hidden grid-bg" id="canvas-container">
+        <!-- Draggable & Zoomable container -->
+        <div id="diagram-workspace" class="absolute top-0 left-0 w-[5000px] h-[5000px] origin-top-left z-0 select-none">
+            <!-- SVG for dynamic connections -->
+            <svg id="svg-connections" class="absolute inset-0 w-[5000px] h-[5000px] pointer-events-none z-10"></svg>
+
+            <!-- Outer Package Frame (pkg) -->
+            <div id="pkg-frame" class="absolute border-2 uml-border-burgundy bg-[#FFFDF0] shadow-sm" style="left: 60px; top: 80px; width: 1200px; height: 580px;">
+                <!-- Tab package header -->
+                <div class="absolute -top-[26px] left-0 flex items-end">
+                    <div class="bg-[#FFFDF0] border-2 border-b-0 border-[#5C1D24] px-4 py-0.5 text-xs font-bold font-code text-[#5C1D24] h-[26px] flex items-center">
+                        pkg
+                    </div>
+                    <svg class="h-[26px] w-[14px] -ml-[2px]" viewBox="0 0 14 26" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M0 26 L0 0 L8 0 L14 26" fill="#FFFDF0" stroke="#5C1D24" stroke-width="2"></path>
+                        <line x1="0" y1="25" x2="13" y2="25" stroke="#FFFDF0" stroke-width="2"></line>
+                    </svg>
+                </div>
+
+                <!-- Server Node: Servidor Unifil (3D Node) -->
+                <div id="server" class="uml-node-3d draggable" style="left: 30px; top: 40px; width: 600px; height: 460px;">
+                    <!-- Centered Label -->
+                    <div class="w-full text-center py-4 select-none drag-handle">
+                        <span class="text-[10px] font-semibold text-[#5C1D24]/80 block font-code leading-none">&lt;&lt;Server&gt;&gt;</span>
+                        <span class="font-bold text-sm text-[#5C1D24] font-code block mt-1">Servidor Unifil</span>
+                    </div>
+
+                    <!-- Environment Node: Laragon 8.2.3 (Flat Component Container) -->
+                    <div id="env" class="absolute border-2 uml-border-burgundy bg-[#FFFDF0] rounded draggable" style="left: 40px; top: 85px; width: 510px; height: 340px;">
+                        <!-- Header with Component Icon -->
+                        <div class="p-3 flex items-center justify-between border-b border-[#5C1D24]/30 drag-handle">
+                            <div class="flex flex-col text-left">
+                                <span class="text-[9px] font-semibold text-[#5C1D24]/80 font-code leading-none">&lt;&lt;Environment&gt;&gt;</span>
+                                <span class="font-bold text-xs text-black font-code mt-0.5">Laragon 8.2.3</span>
+                            </div>
+                            <!-- UML Component Icon -->
+                            <svg class="w-6 h-6 shrink-0" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <rect x="7" y="3" width="14" height="18" rx="1.5" fill="#FFFDF0" stroke="#5C1D24" stroke-width="1.5"></rect>
+                                <rect x="3" y="7" width="8" height="4" rx="1" fill="#FFFDF0" stroke="#5C1D24" stroke-width="1.5"></rect>
+                                <rect x="3" y="13" width="8" height="4" rx="1" fill="#FFFDF0" stroke="#5C1D24" stroke-width="1.5"></rect>
+                            </svg>
+                        </div>
+
+                        <!-- Inner Components -->
+                        <!-- Application: PHP 4.3.16 -->
+                        <div id="php" class="absolute border-2 uml-border-burgundy bg-[#FFFDF0] rounded draggable p-3 flex flex-col justify-between" style="left: 30px; top: 80px; width: 170px; height: 85px;">
+                            <div class="flex flex-col text-left drag-handle">
+                                <span class="text-[8px] font-semibold text-[#5C1D24]/80 font-code leading-none">&lt;&lt;Application&gt;&gt;</span>
+                                <span class="font-bold text-xs text-black font-code mt-0.5">PHP 4.3.16</span>
+                            </div>
+                            <div class="flex justify-end mt-2">
+                                <svg class="w-5 h-5 shrink-0" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <rect x="7" y="3" width="14" height="18" rx="1.5" fill="#FFFDF0" stroke="#5C1D24" stroke-width="1.5"></rect>
+                                    <rect x="3" y="7" width="8" height="4" rx="1" fill="#FFFDF0" stroke="#5C1D24" stroke-width="1.5"></rect>
+                                    <rect x="3" y="13" width="8" height="4" rx="1" fill="#FFFDF0" stroke="#5C1D24" stroke-width="1.5"></rect>
+                                </svg>
+                            </div>
+                        </div>
+
+                        <!-- Framework: Laravel 12.13.0 -->
+                        <div id="laravel" class="absolute border-2 uml-border-burgundy bg-[#FFFDF0] rounded draggable p-3 flex flex-col justify-between" style="left: 270px; top: 90px; width: 170px; height: 85px;">
+                            <div class="flex flex-col text-left drag-handle">
+                                <span class="text-[8px] font-semibold text-[#5C1D24]/80 font-code leading-none">&lt;&lt;Framework&gt;&gt;</span>
+                                <span class="font-bold text-xs text-black font-code mt-0.5">Laravel 12.13.0</span>
+                            </div>
+                            <div class="flex justify-end mt-2">
+                                <svg class="w-5 h-5 shrink-0" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <rect x="7" y="3" width="14" height="18" rx="1.5" fill="#FFFDF0" stroke="#5C1D24" stroke-width="1.5"></rect>
+                                    <rect x="3" y="7" width="8" height="4" rx="1" fill="#FFFDF0" stroke="#5C1D24" stroke-width="1.5"></rect>
+                                    <rect x="3" y="13" width="8" height="4" rx="1" fill="#FFFDF0" stroke="#5C1D24" stroke-width="1.5"></rect>
+                                </svg>
+                            </div>
+                        </div>
+
+                        <!-- Database: PostgreSql 17.5 -->
+                        <div id="postgres" class="absolute border-2 uml-border-burgundy bg-[#FFFDF0] rounded draggable p-3 flex flex-col justify-between" style="left: 260px; top: 220px; width: 180px; height: 85px;">
+                            <div class="flex flex-col text-left drag-handle">
+                                <span class="text-[8px] font-semibold text-[#5C1D24]/80 font-code leading-none">&lt;&lt;Database&gt;&gt;</span>
+                                <span class="font-bold text-xs text-black font-code mt-0.5">PostgreSql 17.5</span>
+                            </div>
+                            <div class="flex justify-end mt-2">
+                                <svg class="w-5 h-5 shrink-0" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <rect x="7" y="3" width="14" height="18" rx="1.5" fill="#FFFDF0" stroke="#5C1D24" stroke-width="1.5"></rect>
+                                    <rect x="3" y="7" width="8" height="4" rx="1" fill="#FFFDF0" stroke="#5C1D24" stroke-width="1.5"></rect>
+                                    <rect x="3" y="13" width="8" height="4" rx="1" fill="#FFFDF0" stroke="#5C1D24" stroke-width="1.5"></rect>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Device Node: Hardware user (3D Node) -->
+                <div id="device" class="uml-node-3d draggable" style="left: 770px; top: 130px; width: 360px; height: 260px;">
+                    <!-- Centered Label -->
+                    <div class="w-full text-center py-4 select-none drag-handle">
+                        <span class="text-[10px] font-semibold text-[#5C1D24]/80 block font-code leading-none">&lt;&lt;Device&gt;&gt;</span>
+                        <span class="font-bold text-sm text-[#5C1D24] font-code block mt-1">Hardware user</span>
+                    </div>
+
+                    <!-- Application: Simplifikathon -->
+                    <div id="simplifikathon" class="absolute border-2 uml-border-burgundy bg-[#FFFDF0] rounded draggable p-3 flex flex-col justify-between" style="left: 85px; top: 90px; width: 190px; height: 95px;">
+                        <div class="flex flex-col text-left drag-handle">
+                            <span class="text-[8px] font-semibold text-[#5C1D24]/80 font-code leading-none">&lt;&lt;Application&gt;&gt;</span>
+                            <span class="font-bold text-xs text-black font-code mt-0.5">Simplifikathon</span>
+                        </div>
+                        <div class="flex justify-end mt-2">
+                            <svg class="w-5 h-5 shrink-0" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <rect x="7" y="3" width="14" height="18" rx="1.5" fill="#FFFDF0" stroke="#5C1D24" stroke-width="1.5"></rect>
+                                <rect x="3" y="7" width="8" height="4" rx="1" fill="#FFFDF0" stroke="#5C1D24" stroke-width="1.5"></rect>
+                                <rect x="3" y="13" width="8" height="4" rx="1" fill="#FFFDF0" stroke="#5C1D24" stroke-width="1.5"></rect>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Floating Zoom / Pan Controls -->
+        <div class="absolute bottom-6 left-6 z-20 flex bg-white/95 backdrop-blur border border-[#E1D9C3] rounded-lg shadow-md p-1.5 space-x-1">
+            <button onclick="changeZoom(0.05)" class="p-2 hover:bg-gray-100 rounded text-gray-700" title="Aproximar">
+                <i data-lucide="zoom-in" class="w-4 h-4"></i>
+            </button>
+            <span id="zoomLabel" class="px-2 flex items-center justify-center text-xs font-bold text-gray-600 min-w-[50px]">95%</span>
+            <button onclick="changeZoom(-0.05)" class="p-2 hover:bg-gray-100 rounded text-gray-700" title="Afastar">
+                <i data-lucide="zoom-out" class="w-4 h-4"></i>
+            </button>
+            <div class="w-[1px] bg-[#E1D9C3]"></div>
+            <button onclick="resetZoomAndPan()" class="p-2 hover:bg-gray-100 rounded text-gray-700" title="Centralizar Visualização">
+                <i data-lucide="maximize" class="w-4 h-4"></i>
+            </button>
+        </div>
+    </main>
+
+    <script>
+        // Define relations
+        const connections = [
+            { from: "laravel", to: "php" },
+            { from: "laravel", to: "postgres" },
+            { from: "server", to: "device", label: "HTTP" }
+        ];
+
+        // Zoom, Pan & Dragging State
+        let zoomScale = 0.95;
+        let panX = 40;
+        let panY = 40;
+        let isDraggingWorkspace = false;
+        let startX, startY;
+
+        let dragEl = null;
+        let dragStartX = 0;
+        let dragStartY = 0;
+        let initialLeft = 0;
+        let initialTop = 0;
+
+        const workspace = document.getElementById('diagram-workspace');
+        const canvasContainer = document.getElementById('canvas-container');
+
+        window.onload = function () {
+            lucide.createIcons();
+            initDraggableNodes();
+            updateWorkspaceTransform();
+            redrawConnections();
+
+            // Canvas Workspace Panning
+            canvasContainer.addEventListener('mousedown', (e) => {
+                if (e.target.closest('.draggable') || e.target.closest('button')) return;
+                isDraggingWorkspace = true;
+                startX = e.clientX - panX;
+                startY = e.clientY - panY;
+                canvasContainer.style.cursor = 'grabbing';
+            });
+
+            window.addEventListener('mousemove', (e) => {
+                if (isDraggingWorkspace) {
+                    panX = e.clientX - startX;
+                    panY = e.clientY - startY;
+                    updateWorkspaceTransform();
+                } else if (dragEl) {
+                    const dx = (e.clientX - dragStartX) / zoomScale;
+                    const dy = (e.clientY - dragStartY) / zoomScale;
+                    dragEl.style.left = `${initialLeft + dx}px`;
+                    dragEl.style.top = `${initialTop + dy}px`;
+                    redrawConnections();
+                }
+            });
+
+            window.addEventListener('mouseup', () => {
+                isDraggingWorkspace = false;
+                dragEl = null;
+                canvasContainer.style.cursor = 'default';
+                document.body.style.cursor = 'default';
+            });
+
+            canvasContainer.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                const delta = e.deltaY < 0 ? 0.05 : -0.05;
+                changeZoom(delta);
+            }, { passive: false });
+        };
+
+        // Initialize drag events for nodes
+        function initDraggableNodes() {
+            const draggables = document.querySelectorAll('.draggable');
+            draggables.forEach(el => {
+                const handle = el.querySelector('.drag-handle') || el;
+                handle.addEventListener('mousedown', (e) => {
+                    e.stopPropagation();
+                    dragEl = el;
+                    dragStartX = e.clientX;
+                    dragStartY = e.clientY;
+                    initialLeft = parseFloat(el.style.left) || 0;
+                    initialTop = parseFloat(el.style.top) || 0;
+                    document.body.style.cursor = 'grabbing';
+                });
+            });
+        }
+
+        // Get coordinates relative to #diagram-workspace
+        function getWorkspaceCoords(el) {
+            const rect = el.getBoundingClientRect();
+            const wRect = workspace.getBoundingClientRect();
+            return {
+                x: (rect.left - wRect.left) / zoomScale,
+                y: (rect.top - wRect.top) / zoomScale,
+                width: rect.width / zoomScale,
+                height: rect.height / zoomScale
+            };
+        }
+
+        // Get connection points with 3D projection offset adjustment
+        function getConnectionPoints(idA, idB) {
+            const elA = document.getElementById(idA);
+            const elB = document.getElementById(idB);
+            if (!elA || !elB) return null;
+
+            const coordsA = getWorkspaceCoords(elA);
+            const coordsB = getWorkspaceCoords(elB);
+
+            const is3dA = elA.classList.contains('uml-node-3d');
+            const is3dB = elB.classList.contains('uml-node-3d');
+
+            const cxA = coordsA.x + coordsA.width / 2;
+            const cyA = coordsA.y + coordsA.height / 2;
+            const cxB = coordsB.x + coordsB.width / 2;
+            const cyB = coordsB.y + coordsB.height / 2;
+
+            const dx = cxB - cxA;
+            const dy = cyB - cyA;
+
+            let sx, sy, tx, ty;
+
+            if (Math.abs(dx) > Math.abs(dy)) {
+                // Horizontal connection
+                if (dx > 0) {
+                    sx = coordsA.x + coordsA.width + (is3dA ? 10 : 0);
+                    sy = cyA;
+                    tx = coordsB.x;
+                    ty = cyB;
+                } else {
+                    sx = coordsA.x;
+                    sy = cyA;
+                    tx = coordsB.x + coordsB.width + (is3dB ? 10 : 0);
+                    ty = cyB;
+                }
+            } else {
+                // Vertical connection
+                if (dy > 0) {
+                    sx = cxA;
+                    sy = coordsA.y + coordsA.height;
+                    tx = cxB;
+                    ty = coordsB.y - (is3dB ? 10 : 0);
+                } else {
+                    sx = cxA;
+                    sy = coordsA.y - (is3dA ? 10 : 0);
+                    tx = cxB;
+                    ty = coordsB.y + coordsB.height;
+                }
+            }
+
+            return { sx, sy, tx, ty };
+        }
+
+        // Redraw SVG connector lines
+        function redrawConnections() {
+            const svg = document.getElementById('svg-connections');
+            svg.innerHTML = `
+                <defs>
+                    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                        <path d="M 0 1.5 L 8 5 L 0 8.5" fill="none" stroke="#5C1D24" stroke-width="1.5" />
+                    </marker>
+                </defs>
+            `;
+
+            connections.forEach(conn => {
+                const pts = getConnectionPoints(conn.from, conn.to);
+                if (!pts) return;
+
+                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                path.setAttribute('d', `M ${pts.sx} ${pts.sy} L ${pts.tx} ${pts.ty}`);
+                path.setAttribute('stroke', '#5C1D24');
+                path.setAttribute('stroke-width', '1.5');
+                path.setAttribute('stroke-dasharray', '6,6');
+                path.setAttribute('fill', 'none');
+                path.setAttribute('marker-end', 'url(#arrow)');
+                svg.appendChild(path);
+
+                if (conn.label) {
+                    const midX = (pts.sx + pts.tx) / 2;
+                    const midY = (pts.sy + pts.ty) / 2;
+                    drawTextLabel(midX, midY, conn.label, 0, -8, true);
+                }
+            });
+        }
+
+        // Draw labeled masks for lines
+        function drawTextLabel(x, y, text, offsetX, offsetY, isCenter = true) {
+            const svg = document.getElementById('svg-connections');
+            const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            
+            const charWidth = 6;
+            const width = text.length * charWidth + 10;
+            const height = 16;
+            
+            const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+            let rx = x + offsetX;
+            let ry = y + offsetY - 11;
+            
+            if (isCenter) {
+                rx = rx - width / 2;
+            }
+            
+            rect.setAttribute('x', rx);
+            rect.setAttribute('y', ry);
+            rect.setAttribute('width', width);
+            rect.setAttribute('height', height);
+            rect.setAttribute('fill', '#F7F4EB');
+            rect.setAttribute('rx', '3');
+            
+            const textEl = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            textEl.setAttribute('x', x + offsetX);
+            textEl.setAttribute('y', y + offsetY);
+            textEl.setAttribute('font-family', 'Fira Code, monospace');
+            textEl.setAttribute('font-size', '10px');
+            textEl.setAttribute('font-weight', '600');
+            textEl.setAttribute('fill', '#5C1D24');
+            if (isCenter) {
+                textEl.setAttribute('text-anchor', 'middle');
+            }
+            textEl.textContent = text;
+            
+            g.appendChild(rect);
+            g.appendChild(textEl);
+            svg.appendChild(g);
+        }
+
+        // Zoom & Pan API
+        function changeZoom(factor) {
+            zoomScale = Math.min(Math.max(zoomScale + factor, 0.25), 1.8);
+            updateWorkspaceTransform();
+            document.getElementById('zoomLabel').textContent = `${Math.round(zoomScale * 100)}%`;
+            redrawConnections();
+        }
+
+        function updateWorkspaceTransform() {
+            workspace.style.transform = `translate(${panX}px, ${panY}px) scale(${zoomScale})`;
+        }
+
+        function resetZoomAndPan() {
+            zoomScale = 0.95;
+            panX = 40;
+            panY = 40;
+            updateWorkspaceTransform();
+            document.getElementById('zoomLabel').textContent = "95%";
+            redrawConnections();
+        }
+    </script>
+</body>
+
+</html>
